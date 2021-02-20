@@ -3,6 +3,10 @@
 import { ApiServer } from './api-server';
 import { MongoConnector } from "./mongo-connector";
 
+if (process.env.NODE_ENV) {
+    require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
+}
+
 export async function start(): Promise<void> {
     const mongoConnector = new MongoConnector();
     const apiServer = new ApiServer();

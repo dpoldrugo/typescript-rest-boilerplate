@@ -2,10 +2,11 @@ swagger:
   outputDirectory: ./dist
   entryFile: 
     - ./src/controller/*
+    - ./src/api/potres2020/*
   outputFormat: OpenApi_3
-  name: Typescript-rest Boilerplate Application
-  description: A Sample application using Typescipt-rest library
-  license: MIT
+  name: middleware-api
+  description: Middleware API for the Potres2020 ecosystem
+  license: AGPL-3.0-only
   produces: [application/json]
   version: 0.0.1
   securityDefinitions:

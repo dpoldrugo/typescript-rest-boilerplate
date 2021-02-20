@@ -4,10 +4,10 @@ services:
     image: mongo:latest
     ports:
       - 27017:27017
-  typescript-rest-boilerplate:
+  middleware-api:
     build:
       context: .
     environment:
       MONGODB_URI: mongodb://mongo:27017/db
     ports:
-      - 3000:3000
+      - 4000:4000
