@@ -9,9 +9,10 @@ import {HttpError} from "typescript-rest/dist/server/model/errors";
 import * as mongoose from "mongoose";
 import {MongoError} from "mongodb";
 import {ApiError} from "./model/ApiError";
+const markdownServe = require("markdown-serve");
 
 export class ApiServer {
-    init = initEnvFile();
+    public init = initEnvFile();
 
     public PORT: number = +process.env.PORT || 3000;
 
@@ -22,9 +23,9 @@ export class ApiServer {
         this.app = express();
         this.config();
 
-        Server.loadServices(this.app, 'controller/*', __dirname);
-        Server.loadServices(this.app, 'api/potres2020/*', __dirname);
-        Server.swagger(this.app, { filePath: './dist/swagger.json' });
+        Server.loadServices(this.app, ['api/*'], __dirname);
+        Server.swagger(this.app, { filePath: './dist/swagger.json' }); // /api-docs
+        this.initMarkDownSupport();
         this.configureErrorHandling();
     }
 
@@ -70,33 +71,34 @@ export class ApiServer {
      */
     private config(): void {
         // Native Express configuration
-        this.app.use(express.static(path.resolve(__dirname, 'public_content'), { maxAge: 31557600000 }));
-        this.app.use('/test-coverage',express.static(path.resolve(__dirname, '../reports/coverage'), { maxAge: 31557600000 }));
-        //this.app.use(express.static(path.resolve(__dirname, '../reports/coverage'), { maxAge: 31557600000 }));
+        // Parse JSON bodies for this app. Make sure you put
+        // `app.use(express.json())` **before** your route handlers!
+        this.app.use(express.json());
+        this.app.use('/test-coverage',express.static(path.resolve(__dirname, '../reports/coverage')));
         this.app.use(cors());
         this.app.use(morgan('combined'));
-        //this.app.use(morgan('dev'));
+        // this.app.use(morgan('dev'));
         this.configureAuthenticator();
     }
 
     private configureErrorHandling() {
         this.app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
             if (res.headersSent) { // important to allow default error handler to close connection if headers already sent
-                return next(err)
+                return next(err);
             }
 
             if (err instanceof HttpError){
-                res.set("Content-Type", "application/json")
-                res.status(err.statusCode)
+                res.set("Content-Type", "application/json");
+                res.status(err.statusCode);
                 res.send(new ApiError(err.message,err.statusCode));
             }
             else if (err instanceof mongoose.Error.ValidationError) {
-                res.set("Content-Type", "application/json")
+                res.set("Content-Type", "application/json");
                 res.status(400);
                 res.send(new ApiError(err.message, 400));
             }
             else if (err instanceof MongoError) {
-                res.set("Content-Type", "application/json")
+                res.set("Content-Type", "application/json");
                 res.status(400);
                 res.send(new ApiError(err.message, 400));
             }
@@ -124,7 +126,40 @@ export class ApiServer {
         Server.registerAuthenticator(authenticator);
         Server.registerAuthenticator(authenticator, 'secondAuthenticator');
     }
+
+    private initMarkDownSupport() {
+        this.app.set('views', path.resolve(__dirname, 'views'));
+        this.app.engine('handlebars', require("express-handlebars")({defaultLayout: 'main'}));
+        this.app.set('view engine', 'handlebars');
+        this.app.use(express.static(path.resolve(__dirname, 'public')));
+        this.app.use(markdownHandler);
+    }
 }
+
+const markdownServer = new markdownServe.MarkdownServer( path.resolve(__dirname, 'web') );
+function markdownHandler(req: express.Request, res: express.Response, next: express.NextFunction) {
+    if (req.path.startsWith('/api') || req.path.includes('images') || req.method !== 'GET')
+        next();
+
+    markdownServer.get(req.path, (err: any, result: any) => {
+        // result is a MarkdownFile instance
+
+        if (err) {
+            // just log error & pass it to next middleware
+            if (!req.path.startsWith('/api')) {
+                // tslint:disable-next-line:no-console
+                console.log(err);
+            }
+            next();
+            return;   // need return here because we are inside a callback
+        }
+        result.parsedContent = result.parseContent();
+        res.render('markdown', { markdownFile: result });
+        return;
+    });
+}
+
+
 
 function initEnvFile() {
     if (process.env.NODE_ENV) {
@@ -133,5 +168,9 @@ function initEnvFile() {
     else {
         require('dotenv').config({path: `./.env`});
     }
-    console.log(`ENV:\n${process.env}`);
+    // tslint:disable-next-line:no-console
+    // console.log(`ENV:`);
+    // tslint:disable-next-line:no-console
+    // console.log(JSON.stringify(process.env));
+
 }

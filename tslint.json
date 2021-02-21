@@ -19,10 +19,11 @@
     "max-classes-per-file": false,
     "no-var-requires": false,
     "ban-types": false,
-    "no-unused-expression": true,
+    "no-unused-expression": false,
     "semicolon": [
       true,
       "always"
-    ]
+    ],
+    "curly": false
   }
 }

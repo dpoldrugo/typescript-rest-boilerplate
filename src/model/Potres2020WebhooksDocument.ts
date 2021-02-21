@@ -5,7 +5,13 @@ import validator from "validator";
 type Potres2020WebhooksDocument = Potres2020Webhooks & mongoose.Document;
 
 export interface Potres2020Webhooks {
+    /**
+     * @type {string} sharedSecret it will be used to calculates sha256
+     */
     sharedSecret: string;
+    /**
+     * @type {string} a valid url which you defined in Ushahidi
+     */
     url: string;
 }
 

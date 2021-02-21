@@ -29,14 +29,16 @@ describe('API Tests', () => {
         if (process.env.NODE_ENV === 'test') {
             apiServer = new ApiServer();
             await apiServer.start();
+            // tslint:disable-next-line:no-console
             console.info(`Started test ApiServer at port ${apiServer.PORT}`);
         }
     });
 
     after(async () => {
         await mongoConnector.disconnect();
-        if (apiServer)
+        if (apiServer) {
             await apiServer.stop();
+        }
     });
 
     describe('The Rest Server', () => {
@@ -47,9 +49,11 @@ describe('API Tests', () => {
             }
 
             expect(Server.getPaths()).to.include.members([
+                '/api/status',
                 '/api/potres2020/utils/checkSha256',
                 '/api/potres2020/webhooks',
             ]);
+            expect(Server.getHttpMethods('/api/status')).to.have.members([HttpMethod.GET]);
             expect(Server.getHttpMethods('/api/potres2020/utils/checkSha256')).to.have.members([HttpMethod.POST]);
             expect(Server.getHttpMethods('/api/potres2020/webhooks')).to.have.members([HttpMethod.POST]);
         });
@@ -261,8 +265,8 @@ describe('API Tests', () => {
 
             const webhookUrlToCreate =
                 {
+                    sharedSecretWrong: 'test-create-no-params',
                     urlWrong: 'https://test-create-without-sharedSecret-and-url-webhook-url.com',
-                    sharedSecretWrong: 'test-create-no-params'
                 };
 
             after(async () => {
@@ -322,6 +326,18 @@ describe('API Tests', () => {
                 });
 
             });
+        });
+
+    });
+
+    describe('GET /api/status', () => {
+        it('should return {"status": "OK"}', (done) => {
+            apiRequest.get('/api/status',
+                async (error, response, body) => {
+                    expect(error).to.be.null;
+                    expect(JSON.parse(body)).to.contains({"status": "OK"});
+                    done();
+                });
         });
 
     });

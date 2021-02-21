@@ -14,9 +14,12 @@
   "license": "AGPL-3.0-only",
   "scripts": {
     "tsc": "tsc",
-    "startLocalMongoDbForDevelopment": "docker-compose -f docker-compose-local-mongo-for-development.yml up",
     "start": "./node_modules/.bin/ts-node src/index.ts",
-    "stopLocalMongoDbForDevelopment": "docker-compose -f docker-compose-local-mongo-for-development.yml down",
+    "prestart:dev": "npm run-script start:mongo:dev --args=-d",
+    "start:dev": "npm start",
+    "poststart:dev": "npm run-script stop:mongo:dev",
+    "start:mongo:dev": "docker-compose -f docker-compose-local-mongo-for-development.yml up $npm_config_args",
+    "stop:mongo:dev": "docker-compose -f docker-compose-local-mongo-for-development.yml down",
     "start:in:docker": "node dist/index.js",
     "start:cluster": "./node_modules/.bin/ts-node src/cluster.ts",
     "build": "npm run clean && tsc && npm run swagger",
@@ -41,13 +44,16 @@
     "typescript-rest": "^3.0.2",
     "typescript-rest-ioc": "^1.0.0",
     "typescript-rest-swagger": "^1.1.5",
-    "validator": "^13.5.2"
+    "validator": "^13.5.2",
+    "express-handlebars": "^3.1.0",
+    "markdown-serve": "^0.8.0"
   },
   "devDependencies": {
     "@types/chai": "4.1.7",
     "@types/cors": "2.8.4",
     "@types/dotenv": "6.1.1",
     "@types/express": "4.16.0",
+    "@types/express-handlebars": "^3.1.0",
     "@types/mocha": "5.2.5",
     "@types/mongodb": "3.1.27",
     "@types/mongoose": "5.5.3",
